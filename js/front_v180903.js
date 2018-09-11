@@ -141,6 +141,7 @@ $(document).ready(function() {
             var delY = 0;
             var offsetX = 0;
             var isDrag = false;
+            var direction = '';
             
 
             // 초기화
@@ -156,7 +157,6 @@ $(document).ready(function() {
                 case 'basic': showSlide = showSlideBasic; break;
                 case 'fade': showSlide = showSlideFade; break;
                 case 'swipe': showSlide = showSlideSwipe; break;
-                case 'animation': showSlide = showSlideAnimation; break;
                 default: showSlide = showSlideBasic;
             }
             showSlide(slideFirst);
@@ -196,8 +196,7 @@ $(document).ready(function() {
                 isDrag = true;
                 $selector.find('ul.slide').css({'transition': 'none'});
                 clearTimeout(timerId); // 손 댔을 때도 타이머 끄기
-                $selector.find('ul.indicator li span.bar span').stop(true).css({'width': '0'});
-                startX = e.originalEvent.touches[0].clientX; //터치했을 때 두 번째 닿는게 두 번째 손가락.
+                startX = e.originalEvent.touches[0].clientX;
                 startY = e.originalEvent.touches[0].clientY;
                 offsetX = $selector.find('ul.slide').position().left;
             }); // end of touchstart
@@ -219,19 +218,21 @@ $(document).ready(function() {
                     if ((delX < 0 && slideNow === numSlide) || (delX > 0 && slideNow === 1)) {
                         delX = delX / 5;
                     }
-                    $(selector).find('ul.slide').css({'left': (offsetX + delX) + 'px'});
+                    $selector.find('ul.slide').css({'left': (offsetX + delX) + 'px'});
                 }
             }, {passive: false}); // end of touchmove
-            $(document).on('touchend', function(e) {
-                if (isDrag === false) return false;
-                if (delX < -50 && slideNow !== numSlide) {
-                    showSlide(slideNext);
-                } else if (delX > 50 && slideNow !== 1) {
-                    showSlide(slidePrev);
-                } else {
-                    showSlide(slideNow);
+            $(document).on('touchend', function() {
+                if (isDrag === true) {
+                    if (delX < -50 && slideNow !== numSlide) {
+                        showSlide(slideNext);
+                    } else if (delX > 50 && slideNow !== 1) {
+                        showSlide(slidePrev);
+                    } else {
+                        showSlide(slideNow);
+                    }
                 }
                 isDrag = false;
+                direction = '';
             }); // end of touchend
 
             // 공통함수
@@ -292,28 +293,6 @@ $(document).ready(function() {
                 } 
             }  // end of showSlideSwipe
             
-            function showSlideAnimation(n) {
-                if (slideNow === n || onPlaying === true) return false; // 현재 위치 네비 누르면 재실행 막기 || 애니메이션 중 클릭해서 애니메이션 쌓이는 것 막기
-                clearTimeout(timerId);
-                if (slideNow === 0) {
-                    $selector.find('ul.slide li').css({'display': 'none'});
-                    $selector.find('ul.slide li:eq(' + (n - 1) + ')').css({'display': 'block'});
-                } else {
-                    onPlaying = true;
-                    $selector.find('ul.slide li:eq(' + (slideNow - 1) + ')').attr({'class': 'off'}).one('animationend', function() {
-                        onPlaying = false;
-                    });
-                    $selector.find('ul.slide li:eq(' + (n - 1) + ')').css({'display': 'block', 'opacity': 0}).attr({'class': 'on'});
-                }
-                $selector.find('ul.indicator li').removeClass('on');
-                $selector.find('ul.indicator li:eq(' + (n - 1) + ')').addClass('on');
-                slideNow = n;
-                slideNext = (n + 1) > numSlide ? 1 : n + 1;
-                slidePrev = (n - 1) < 1 ? numSlide : n - 1;
-                if (isTimerOn === true) {
-                    timerId = setTimeout(function() {showSlide(slideNext);}, timerSpeed);
-                } 
-            }  // end of showSlideAnimation
         });  // end of each
     } // end of jquery function - setImageSlide
     
